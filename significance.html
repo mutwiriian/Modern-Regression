@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mutwiri, Ian">
+<meta name="dcterms.date" content="2023-12-10">
+
+<title>A Modern Approach to Regression and Statistical Inference</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="significance_files/libs/clipboard/clipboard.min.js"></script>
+<script src="significance_files/libs/quarto-html/quarto.js"></script>
+<script src="significance_files/libs/quarto-html/popper.min.js"></script>
+<script src="significance_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="significance_files/libs/quarto-html/anchor.min.js"></script>
+<link href="significance_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="significance_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="significance_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="significance_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="significance_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+<script src="significance_files/libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="significance_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">A Modern Approach to Regression and Statistical Inference</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mutwiri, Ian </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 10, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>The R programming language is really powerful in performing statistical analysis. From outset, it was purposely created for analysis and visualization of data. I am of the opinion that <code>Nothing beats R in data wrangling and analysis. Give it to Python for Machine Learning</code>. However, doing statistical analysis the traditional way, i.e.&nbsp;using base R functions, can be quite cumbersome and verbose at the same time. With the help of new, opinionated packages, one can streamline this process and make is as easy as it can get. In this guide I will cover hypothesis testing and regression analysis where the main goal is to test for significance of coefficients and fitted models. I will also demonstrate how to perform statistical tests quickly and efficiently with the <code>infer</code> package. While the results from this exercise might not be meaningful or generalizable, this guide will illustrate how to better perform statistical analysis in R and how one can generalize this approach to other settings.</p>
+</section>
+<section id="linear-regression" class="level1">
+<h1>Linear Regression</h1>
+<p>In linear regression, one seeks to understand the relationship between two or more variables; the independent variable(s), and some other variable of interest called the dependent variable. We do <code>Simple Regression</code> if there is one independent variable and do <code>Multiple Regression</code> if there are two or more independent variables. In both cases we want to understand how changes in the independent variable(s) affect the dependent variables. Linear regression, as implemented in R, applies the <code>maximum likelihood</code> algorithm to extract these factors. These factors are referred to as the coefficients of our variables. They show the magnitude and the direction of the effect of changes in independent variables on the dependent variables.</p>
+<p>One should however note that these coefficients are not the true coefficients because in most cases we do not have the exact population on which we are regressing on. In almost all cases, researchers obtain samples from the data and use them to extract estimates which they generalize to the entire population. One should be careful when making claims based on these estimates. This is where <code>significance testing</code> comes into play. Significance testing involves performing checks on these estimates to ensure that the claims we make about the population are credible and based on evidence from the data. This is because in sampling, there is a lot of randomness. It could be that whatever results we obtain on a given sample would be quite different from results we would have obtained from another random sample from the same population. Significance testing helps researchers avoid this uncertainty and make conclusions from studies and other related experiments.</p>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<p>This guide will based on the <code>Car</code> dataset obtained from <a href="https://www.kaggle.com/datasets/nehalbirla/vehicle-dataset-from-cardekho/?select=car+details+v4.csv">Kaggle</a>. This data contains variables that are relevant in explaining the selling price of a car. It also suitable for this setting as it contains continuous and categorical features which are perfect for hypothesis testing.</p>
+</section>
+<section id="some-exploratory-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="some-exploratory-analysis">Some Exploratory Analysis</h2>
+<p>It is helpful to put the data in the right format and perform some exploratory analysis to get a sense of how the data looks like. We can load the data first and then do some manipulation to put it into the right format.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-1_37a7d1c31f3129393d196c446af7ea42">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>cars <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'cars.csv'</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>cars <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> <span class="co">#set column names lower case</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">#select the relevant columns in this setting</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    price, year, kilometer, fuel_type, transmission, engine,drivetrain,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    seating_capacity, fuel_tank_capacity</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">'sitting_capacity'</span> <span class="ot">=</span> seating_capacity</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="co">#create column for years since the car was manufactured(age)</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">age =</span> <span class="fu">year</span>(<span class="fu">today</span>()) <span class="sc">-</span> year,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">engine =</span> <span class="fu">str_replace_all</span>(engine, <span class="st">" cc"</span>,<span class="st">''</span>), <span class="co">#clean the columns</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">engine =</span> <span class="fu">as.numeric</span>(engine), <span class="co">#transform to numeric</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">price =</span> price<span class="sc">/</span><span class="fl">1e3</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>year) <span class="sc">%&gt;%</span> <span class="co">#year is nolonger relevant and has been replaced by age</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(age, <span class="at">.before =</span> kilometer) <span class="sc">%&gt;%</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="co">#transform the following columns to categorical</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(fuel_type, transmission, drivetrain), as_factor)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="co">#drop missing values as they raise problems in regression</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>()</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># set default theme for all plots</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The previous steps have been chained together using the pipe operator, <code>%&gt;%</code>. The tibble operator takes as input data(<code>tibble</code>), which is the output of some previous step and also passes the tibble to the next step.</p>
+<p>We can then do a quick summary of the structure of the data after these transformations.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-2_673e4672028597f982e7993c94ac5eb5">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(cars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 1,874
+Columns: 9
+$ price              &lt;dbl&gt; 505.000, 450.000, 220.000, 799.000, 1950.000, 675.0…
+$ age                &lt;dbl&gt; 6, 9, 12, 4, 5, 6, 6, 6, 8, 6, 5, 4, 4, 6, 7, 4, 5,…
+$ kilometer          &lt;dbl&gt; 87150, 75000, 67000, 37500, 69000, 73315, 75000, 56…
+$ fuel_type          &lt;fct&gt; Petrol, Diesel, Petrol, Petrol, Diesel, Petrol, Die…
+$ transmission       &lt;fct&gt; Manual, Manual, Manual, Manual, Manual, Manual, Aut…
+$ engine             &lt;dbl&gt; 1198, 1248, 1197, 1197, 2393, 1373, 1995, 1798, 146…
+$ drivetrain         &lt;fct&gt; FWD, FWD, FWD, FWD, RWD, FWD, AWD, FWD, FWD, FWD, F…
+$ sitting_capacity   &lt;dbl&gt; 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, …
+$ fuel_tank_capacity &lt;dbl&gt; 35, 42, 35, 37, 55, 43, 51, 50, 50, 45, 28, 43, 50,…</code></pre>
+</div>
+</div>
+<p>We observe that our variable of interest,<code>price</code>, is highly skewed but with a log transformation it becomes more evenly distribution.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-3_1671cedc2ba522876ce85bb884edcc46">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>original_price <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(price))<span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">fill=</span><span class="st">'midnightblue'</span>)<span class="sc">+</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">'Frequency'</span>,<span class="at">y=</span><span class="st">'Price'</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>trans_price <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(price))<span class="sc">+</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">fill=</span><span class="st">'midnightblue'</span>)<span class="sc">+</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()<span class="sc">+</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">'Frequency'</span>,<span class="at">y=</span><span class="st">'Price'</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>(original_price <span class="sc">+</span> trans_price)<span class="sc">+</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="st">'Distribution of Price after transformation'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The log transformation pulls data that is further away closer and data that are clustered further apart.It is a very useful transformation especially in machine learning models where skewness and class imbalance limit their performance.Skewness can also make it hard or impossible to see the relationships between variables. A log transformation on either or both of these variables can applied. The other most commonly used transformation is the <code>square root</code> transformation. As shown below, now it’s easier to see that there is a positive relationship between <code>engine</code> size and <code>price</code> after transforming both variables.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-4_184946fd7409f6dc7b8a6247e9d137c2">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>original <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(engine,price)) <span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">'Engine'</span>, <span class="at">y =</span> <span class="st">'Price'</span>, <span class="at">title =</span> <span class="st">'Before'</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>transformed <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(engine,price)) <span class="sc">+</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()<span class="sc">+</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>()<span class="sc">+</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'log(engine)'</span>, <span class="at">y=</span> <span class="st">'log(price)'</span>, <span class="at">title =</span> <span class="st">'After'</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>(original <span class="sc">+</span> transformed)<span class="sc">+</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">title =</span> <span class="st">'The relationship is clearer after transformation'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We can also use box plots to visualize the distribution of a few key variables. You may note that many of these variables are highly skewed(sparse). Therefore, a transformation is necessary.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-5_2bdaf3a78a1e7ea8ecfbc9337ec0935c">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>cars <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(price,kilometer,engine) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">everything</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(name) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(value,<span class="at">fill=</span>name))<span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">show.legend =</span> <span class="cn">FALSE</span>)<span class="sc">+</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()<span class="sc">+</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">'Set1'</span>)<span class="sc">+</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="st">'name'</span>, <span class="at">scales =</span> <span class="st">'free'</span>, <span class="at">nrow =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We see that most of the cars use petrol and diesel. Other categories have very low frequencies and will likely add more noise to the data. We can resolve this by collecting these into a <code>Other</code> group.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-6_a608a26f2b7e1bfe5cd1a4a38a5ac0ad">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>all_types <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(fuel_type) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y=</span><span class="fu">fct_reorder</span>(fuel_type,n),<span class="at">x=</span>n, <span class="at">fill =</span> fuel_type))<span class="sc">+</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">''</span>,<span class="at">y=</span><span class="st">''</span>,<span class="at">title =</span> <span class="st">'Before'</span>)<span class="sc">+</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">'Set1'</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>reduced <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">fuel_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>      fuel_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'Petrol'</span>, <span class="st">'Diesel'</span>) <span class="sc">~</span> fuel_type,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">.default =</span> <span class="st">'Other'</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(fuel_type) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y=</span><span class="fu">fct_reorder</span>(fuel_type,n),<span class="at">x=</span>n, <span class="at">fill =</span> fuel_type))<span class="sc">+</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">''</span>,<span class="at">y=</span><span class="st">''</span>,<span class="at">title =</span> <span class="st">'After'</span>)<span class="sc">+</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">'Set1'</span>)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>(all_types <span class="sc">+</span> reduced) <span class="sc">+</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">title =</span> <span class="st">"Reducing noise from rare categories"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" style="width:110.0%"></p>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cars <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">fuel_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      fuel_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'Petrol'</span>, <span class="st">'Diesel'</span>) <span class="sc">~</span> fuel_type,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">.default =</span> <span class="st">'Other'</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Most cars have manual transmission but by eye-balling, the difference in frequency between cars with automatic transmission is not much. We will verify this later by conducting a formal statistical test.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-7_ab5e8caf07e56ea2337a38b71d349384">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>cars <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(transmission) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc =</span> {scales<span class="sc">::</span><span class="fu">percent</span>(n<span class="sc">/</span><span class="fu">sum</span>(n))}</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(transmission,n,<span class="at">fill=</span>transmission))<span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">x =</span> transmission, <span class="at">y =</span> n,<span class="at">label =</span> perc, <span class="at">fontface =</span> <span class="st">'bold'</span>), <span class="at">vjust =</span> <span class="sc">-</span>.<span class="dv">8</span>, <span class="at">size =</span><span class="dv">4</span>)<span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1150</span>))<span class="sc">+</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">'Frequency'</span>,<span class="at">x=</span><span class="st">''</span>, <span class="at">title =</span> <span class="st">'Transmission types'</span>)<span class="sc">+</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">'Set1'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>A high proportion of the cars are Front-Wheel Drive cars. This could mean that most of the cars are sedans or SUVs. This is also supported by the observation that there are more 5-seater cars.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-8_905b0495b811dfc2955ddc101ff0a1a0">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>drivetrain_plot <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(drivetrain) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(n,<span class="fu">fct_reorder</span>(drivetrain,n),<span class="at">fill=</span>drivetrain))<span class="sc">+</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F) <span class="sc">+</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">'Drivetrain'</span>,<span class="at">x=</span><span class="st">'Count'</span>)<span class="sc">+</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">'Set1'</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>seater_plot <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(sitting_capacity) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sitting_capacity=</span><span class="fu">as_factor</span>(sitting_capacity)) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(sitting_capacity,n,<span class="at">fill=</span>sitting_capacity))<span class="sc">+</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">'Capacity'</span>,<span class="at">y=</span><span class="st">'Count'</span>)<span class="sc">+</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">'Set1'</span>)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>drivetrain_plot <span class="sc">+</span> seater_plot <span class="sc">+</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">'SUVs dominate the pool of cars'</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title.position =</span> <span class="st">'plot'</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" style="width:110.0%"></p>
+</div>
+</div>
+<p>We can do the same transformation for the <code>sitting_capacity</code> variable as we did for the <code>fuel_type</code> variable.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-9_e8fcc4b2cb03c00b3b787041f0bee74a">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>cars <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">sitting_capacity =</span> <span class="fu">case_when</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>      sitting_capacity <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">7</span>) <span class="sc">~</span> <span class="fu">as.character</span>(sitting_capacity),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">.default =</span> <span class="st">'Other'</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">sitting_capacity =</span> <span class="fu">as_factor</span>(sitting_capacity),</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">fuel_type =</span> <span class="fu">as_factor</span>(fuel_type)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The fuel tank capacity variable appears to be multimodal. We could point the most common frequencies for different car types considered in the data.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-10_1f1ed632d375f2e2d77f77b3c24955de">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>cars <span class="sc">%&gt;%</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(fuel_tank_capacity))<span class="sc">+</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">'midnightblue'</span>)<span class="sc">+</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Fuel tank capacity'</span>, <span class="at">y =</span> <span class="st">'Density'</span>, </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">'Fuel capacity is multimodal and less skewed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Having done that bit of exploration, we can then head into regression modelling and analysis</p>
+</section>
+<section id="regression-modelling" class="level2">
+<h2 class="anchored" data-anchor-id="regression-modelling">Regression Modelling</h2>
+<p>We begin by setting a simple regression model with the price as the dependent variable and <code>engine</code>, <code>age</code> and <code>kilometer</code>s covered as the independent variables. We do this using the <code>lm()</code> function in R and the <code>y ~ x</code> interface for specifying the model. We begin with a simple model. The <code>summary()</code> function is used to summarize the results of the model including statistics like standard errors and p-values.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-11_bab3519b0732dca504f09b013a768a81">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>spec_1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> age <span class="sc">+</span> kilometer <span class="sc">+</span> engine <span class="sc">+</span> fuel_tank_capacity,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data =</span> cars)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(spec_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = price ~ age + kilometer + engine + fuel_tank_capacity, 
+    data = cars)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-6806.0  -691.3  -124.0   450.9 28160.5 
+
+Coefficients:
+                     Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)        -1.449e+03  1.664e+02  -8.706  &lt; 2e-16 ***
+age                -2.142e+02  1.327e+01 -16.141  &lt; 2e-16 ***
+kilometer          -4.248e-03  7.060e-04  -6.017 2.13e-09 ***
+engine              1.671e+00  1.044e-01  16.001  &lt; 2e-16 ***
+fuel_tank_capacity  3.690e+01  4.367e+00   8.450  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1714 on 1869 degrees of freedom
+Multiple R-squared:  0.5019,    Adjusted R-squared:  0.5008 
+F-statistic: 470.8 on 4 and 1869 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>With this model, we see that a car’s ‘age’ and the number of kilometers covered are negatively related with its price while the engine power and fuel capacity are positively related to its price.This p-values indicate that all variables specified in the model are highly significant in explaining the variation in the prices of the cars. Looking at the F-statistic from the table above, we can further conclude that the model is significant in explaining the relationship between <code>engine</code>, <code>age</code>, <code>kilometer</code> and <code>price</code>. The R<sup>2</sup> value reported at the bottom of the regression table measures the proportion of the variation in the dependent variable that can be explained by the independent variables included in the model. Despite the fact that the R<sup>2</sup> value is not a reliable measure of the performance of the model, it relatively low in this case implying that we could get better performance by adding more variables.</p>
+<p>We can consider another model which includes interaction effects between the variables. Interaction effects occur when the effect of one variable on the dependent variable varies with the value of some other independent variable. We can include an interaction for <code>engine</code> and <code>fuel_tank_capacity</code> and interaction term for <code>age</code> and <code>kilometer</code> as they affect <code>price</code> in the same directions.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-12_fe3a297e814c58a314b0019bd4a84365">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>spec_2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> age<span class="sc">*</span>kilometer <span class="sc">+</span> engine<span class="sc">*</span>fuel_tank_capacity,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> cars)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(spec_2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = price ~ age * kilometer + engine * fuel_tank_capacity, 
+    data = cars)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-9706.6  -656.6   -98.0   446.5 27390.5 
+
+Coefficients:
+                            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)                2.679e+03  4.349e+02   6.159 8.92e-10 ***
+age                       -2.953e+02  2.256e+01 -13.088  &lt; 2e-16 ***
+kilometer                 -1.160e-02  2.442e-03  -4.751 2.18e-06 ***
+engine                    -7.055e-01  2.625e-01  -2.687 0.007266 ** 
+fuel_tank_capacity        -2.338e+01  7.427e+00  -3.149 0.001667 ** 
+age:kilometer              1.174e-03  3.558e-04   3.301 0.000983 ***
+engine:fuel_tank_capacity  3.627e-02  3.702e-03   9.798  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1669 on 1867 degrees of freedom
+Multiple R-squared:  0.5283,    Adjusted R-squared:  0.5268 
+F-statistic: 348.5 on 6 and 1867 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>The interaction terms are significant and results in a higher R<sup>2</sup> value. It is plausible that they have an impact in the model and should be considered in our modelling.</p>
+<p>The models above include continuous variables only. We can consider another model which includes the categorical variables in the data. Comparing the models can help us estimate the effects of these categorical variables on the dependent variable and the effect on the coefficients of the other independent variables.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-13_44e9ab986cf60b133dae63b128d431e6">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>spec_3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> age <span class="sc">+</span> kilometer <span class="sc">+</span> engine <span class="sc">+</span> fuel_tank_capacity<span class="sc">+</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>               fuel_type <span class="sc">+</span> transmission <span class="sc">+</span> drivetrain <span class="sc">+</span>sitting_capacity,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> cars)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(spec_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = price ~ age + kilometer + engine + fuel_tank_capacity + 
+    fuel_type + transmission + drivetrain + sitting_capacity, 
+    data = cars)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-7859.9  -665.0  -137.2   424.6 27529.8 
+
+Coefficients:
+                        Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)           -1.357e+03  1.899e+02  -7.144 1.29e-12 ***
+age                   -2.130e+02  1.281e+01 -16.629  &lt; 2e-16 ***
+kilometer             -2.497e-03  6.808e-04  -3.667 0.000252 ***
+engine                 1.746e+00  1.107e-01  15.772  &lt; 2e-16 ***
+fuel_tank_capacity     3.254e+01  4.732e+00   6.877 8.32e-12 ***
+fuel_typeDiesel       -5.135e+02  8.920e+01  -5.757 9.99e-09 ***
+fuel_typeOther         3.639e+02  2.300e+02   1.582 0.113782    
+transmissionAutomatic  3.385e+02  9.514e+01   3.557 0.000384 ***
+drivetrainRWD          5.197e+02  1.410e+02   3.685 0.000235 ***
+drivetrainAWD          9.439e+02  1.589e+02   5.940 3.39e-09 ***
+sitting_capacity7     -1.410e+03  1.302e+02 -10.825  &lt; 2e-16 ***
+sitting_capacityOther -2.921e+02  1.845e+02  -1.583 0.113675    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1615 on 1862 degrees of freedom
+Multiple R-squared:  0.5593,    Adjusted R-squared:  0.5567 
+F-statistic: 214.8 on 11 and 1862 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>From the regression results above , we see a warning on singularity for <code>sitting_capacity</code>. This is the result of multicollinearity. Multicollinearity means that one of the independent variables in the data can be written as a linear combination of of another independent variables. This makes the variable redundant as it does not provide additional information that is not yet in the model. The solution in this case is to remove the variable. This is done internally by <code>R</code> when it throws the warning. We can remove it from the formula for completeness.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-14_54d8568898cd9e96f266ad23f8732f2d">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>spec_3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> age <span class="sc">+</span> kilometer <span class="sc">+</span> engine <span class="sc">+</span> fuel_tank_capacity<span class="sc">+</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>               fuel_type <span class="sc">+</span> transmission <span class="sc">+</span> drivetrain,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> cars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>When working with categorical independent variables, the interpretations of these coefficients is different. For example for the <code>drivetrain</code> variable, the coefficient for <code>drivetrainRWD</code> means that compared to the base class(chosen internally as <code>FWD</code>), the price of <code>RWD</code> cars is higher than the price of <code>FWD</code> cars by $519.7 on average.</p>
+<p>Given that we observe significant categorical variables and interaction effects, we can consider another model which includes all of these features.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-15_31f3e692113c5a94d431f417577f8859">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>spec_4 <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> age <span class="sc">+</span> kilometer <span class="sc">+</span> engine <span class="sc">+</span> fuel_tank_capacity<span class="sc">+</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>               fuel_type <span class="sc">+</span> transmission <span class="sc">+</span> drivetrain<span class="sc">+</span> </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>               age<span class="sc">*</span>kilometer <span class="sc">+</span> engine<span class="sc">*</span>fuel_tank_capacity, </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> cars)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(spec_4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = price ~ age + kilometer + engine + fuel_tank_capacity + 
+    fuel_type + transmission + drivetrain + age * kilometer + 
+    engine * fuel_tank_capacity, data = cars)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-9248.1  -670.9   -50.6   495.7 27457.1 
+
+Coefficients:
+                            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)                2.765e+03  4.802e+02   5.759 9.88e-09 ***
+age                       -2.635e+02  2.238e+01 -11.775  &lt; 2e-16 ***
+kilometer                 -8.736e-03  2.427e-03  -3.599 0.000327 ***
+engine                    -7.468e-01  2.865e-01  -2.606 0.009222 ** 
+fuel_tank_capacity        -2.986e+01  8.370e+00  -3.567 0.000370 ***
+fuel_typeDiesel           -2.966e+02  9.579e+01  -3.097 0.001986 ** 
+fuel_typeOther             1.765e+02  2.324e+02   0.759 0.447730    
+transmissionAutomatic      6.853e+02  9.331e+01   7.345 3.07e-13 ***
+drivetrainRWD              3.351e+02  1.379e+02   2.430 0.015192 *  
+drivetrainAWD              5.636e+02  1.575e+02   3.578 0.000356 ***
+age:kilometer              8.967e-04  3.511e-04   2.554 0.010732 *  
+engine:fuel_tank_capacity  3.403e-02  3.939e-03   8.639  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1632 on 1862 degrees of freedom
+Multiple R-squared:  0.5501,    Adjusted R-squared:  0.5474 
+F-statistic: 206.9 on 11 and 1862 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>We could have obtained similar results by taking the Bayesian approach in which we assume a prior distribution of the model parameters and estimate a posterior distribution that is obtained by updating the prior distribution based on the likelihood obtained from the data. We would proceed as follows:</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-16_6ff9eb2ec40ecf3a4d2caba0ac5a9aad">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rstanarm)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>rstanarm<span class="sc">::</span><span class="fu">stan_glm</span>(price <span class="sc">~</span> age <span class="sc">+</span> kilometer <span class="sc">+</span> engine<span class="sc">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>                     fuel_tank_capacity<span class="sc">+</span>fuel_type <span class="sc">+</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>                     transmission <span class="sc">+</span> drivetrain<span class="sc">+</span> age<span class="sc">*</span>kilometer <span class="sc">+</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>                     engine<span class="sc">*</span>fuel_tank_capacity, </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">data =</span> cars,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">refresh =</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>stan_glm
+ family:       gaussian [identity]
+ formula:      price ~ age + kilometer + engine + fuel_tank_capacity + fuel_type + 
+       transmission + drivetrain + age * kilometer + engine * fuel_tank_capacity
+ observations: 1874
+ predictors:   12
+------
+                          Median MAD_SD
+(Intercept)               2764.1  487.9
+age                       -262.4   23.4
+kilometer                    0.0    0.0
+engine                      -0.8    0.3
+fuel_tank_capacity         -30.1    8.7
+fuel_typeDiesel           -295.8   93.4
+fuel_typeOther             179.3  232.3
+transmissionAutomatic      687.3   90.8
+drivetrainRWD              336.1  141.0
+drivetrainAWD              565.0  157.7
+age:kilometer                0.0    0.0
+engine:fuel_tank_capacity    0.0    0.0
+
+Auxiliary parameter(s):
+      Median MAD_SD
+sigma 1632.3   26.8
+
+------
+* For help interpreting the printed output see ?print.stanreg
+* For info on the priors used see ?prior_summary.stanreg</code></pre>
+</div>
+</div>
+<p>While this model specification is not so different from the other models, we can gain a better understanding of the variation in the coefficient estimates across the models by comparing all the models. This will enable us to see how the coefficients vary with the inclusion or exclusion of some of the factors.</p>
+<p>To compare the models we can create a regression table as follows:</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-17_530566e427e6fe42b717f5a0d7f57bef">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(modelsummary)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'Model 1'</span> <span class="ot">=</span> spec_1,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'Model 2'</span> <span class="ot">=</span> spec_2,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">'Model 3'</span> <span class="ot">=</span> spec_3,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">'Model 4'</span> <span class="ot">=</span> spec_4</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="fu">modelsummary</span>(</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  models, </span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">vcov =</span> <span class="st">'robust'</span>, </span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">fmt =</span> <span class="dv">2</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate =</span> <span class="st">"{estimate}{stars}"</span>,</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">coef_rename =</span> <span class="fu">c</span>(</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'age'</span> <span class="ot">=</span> <span class="st">'Age'</span>, <span class="st">'kilometer'</span> <span class="ot">=</span> <span class="st">'Kilometers'</span>,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">'engine'</span> <span class="ot">=</span> <span class="st">'Engine size'</span>,</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fuel_tank_capacity'</span> <span class="ot">=</span> <span class="st">'Fuel tank capcity'</span>, </span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'age:kilometer'</span> <span class="ot">=</span> <span class="st">'Age x Kilometers'</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'engine:fuel_tank_capacity'</span> <span class="ot">=</span> <span class="st">'Engine x Fuel tank capacity'</span>,</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fuel_typeDiesel'</span> <span class="ot">=</span> <span class="st">'Fuel type: Diesel'</span>,</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fuel_typeOther'</span> <span class="ot">=</span> <span class="st">'Fuel type: Other'</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'transmissionAutomatic'</span> <span class="ot">=</span> <span class="st">'Transmission: Automatic'</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">'drivetrainRWD'</span> <span class="ot">=</span> <span class="st">'Drivetrain: RWD'</span>,</span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">'drivetrainAWD'</span> <span class="ot">=</span> <span class="st">'Drivetrain: AWD'</span></span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">gof_omit =</span> <span class="st">"Num|Adj|AIC|BIC|Log|Std"</span>,</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">title =</span> <span class="st">'Comparision of different specifications'</span></span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small" data-quarto-postprocess="true">
+<caption>Comparision of different specifications</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th"></th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">Model 1</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">&nbsp;Model 2</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">&nbsp;Model 3</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">&nbsp;Model 4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">(Intercept)</td>
+<td style="text-align: center;">−1448.53***</td>
+<td style="text-align: center;">2679.00*</td>
+<td style="text-align: center;">−1133.08**</td>
+<td style="text-align: center;">2765.27**</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(228.67)</td>
+<td style="text-align: center;">(1062.85)</td>
+<td style="text-align: center;">(349.72)</td>
+<td style="text-align: center;">(967.56)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Age</td>
+<td style="text-align: center;">−214.20***</td>
+<td style="text-align: center;">−295.26***</td>
+<td style="text-align: center;">−200.73***</td>
+<td style="text-align: center;">−263.47***</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(40.86)</td>
+<td style="text-align: center;">(73.77)</td>
+<td style="text-align: center;">(31.73)</td>
+<td style="text-align: center;">(59.71)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kilometers</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">−0.01*</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">−0.01*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(0.01)</td>
+<td style="text-align: center;">(0.00)</td>
+<td style="text-align: center;">(0.01)</td>
+<td style="text-align: center;">(0.00)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Engine size</td>
+<td style="text-align: center;">1.67***</td>
+<td style="text-align: center;">−0.71</td>
+<td style="text-align: center;">1.54***</td>
+<td style="text-align: center;">−0.75</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(0.33)</td>
+<td style="text-align: center;">(0.64)</td>
+<td style="text-align: center;">(0.37)</td>
+<td style="text-align: center;">(0.64)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuel tank capcity</td>
+<td style="text-align: center;">36.90***</td>
+<td style="text-align: center;">−23.38</td>
+<td style="text-align: center;">30.04**</td>
+<td style="text-align: center;">−29.86</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(10.77)</td>
+<td style="text-align: center;">(22.02)</td>
+<td style="text-align: center;">(9.22)</td>
+<td style="text-align: center;">(20.00)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Age x Kilometers</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(0.00)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(0.00)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Engine x Fuel tank capacity</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">0.04**</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">0.03**</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(0.01)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(0.01)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuel type: Diesel</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">−594.61***</td>
+<td style="text-align: center;">−296.64*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(174.54)</td>
+<td style="text-align: center;">(140.87)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuel type: Other</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">267.16</td>
+<td style="text-align: center;">176.46</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(188.00)</td>
+<td style="text-align: center;">(184.12)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Transmission: Automatic</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">571.32***</td>
+<td style="text-align: center;">685.32***</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(91.70)</td>
+<td style="text-align: center;">(75.64)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Drivetrain: RWD</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">259.60</td>
+<td style="text-align: center;">335.13*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">(177.24)</td>
+<td style="text-align: center;">(147.86)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Drivetrain: AWD</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">701.51**</td>
+<td style="text-align: center;">563.56*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; box-shadow: 0px 1.5px;"></td>
+<td style="text-align: center; box-shadow: 0px 1.5px;"></td>
+<td style="text-align: center; box-shadow: 0px 1.5px;"></td>
+<td style="text-align: center; box-shadow: 0px 1.5px;">(228.55)</td>
+<td style="text-align: center; box-shadow: 0px 1.5px;">(237.27)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">R2</td>
+<td style="text-align: center;">0.502</td>
+<td style="text-align: center;">0.528</td>
+<td style="text-align: center;">0.531</td>
+<td style="text-align: center;">0.550</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">F</td>
+<td style="text-align: center;">104.013</td>
+<td style="text-align: center;">143.081</td>
+<td style="text-align: center;">128.302</td>
+<td style="text-align: center;">124.072</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RMSE</td>
+<td style="text-align: center;">1711.81</td>
+<td style="text-align: center;">1665.80</td>
+<td style="text-align: center;">1660.77</td>
+<td style="text-align: center;">1626.92</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+<p>One particular of the above modelling is multicollinearity and overfitting as can be seen in changes in the magnitude and sign of coefficients fir variables like fuel tank capacity and engine size. We can also see that as we add variables to the model the R<sup>2</sup> values increases while the root mean squared error decreases.This happens even when the variables are insignificant: <code>drivetrainRWD</code>.This is a limitations that comes with using R<sup>2</sup>. To justify the addition of variables in the model we can conduct ANOVA analysis between the second and the fourth model.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-18_fde4a73f4709f246c747914096f2a3ad">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(spec_2, spec_4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Model 1: price ~ age * kilometer + engine * fuel_tank_capacity
+Model 2: price ~ age + kilometer + engine + fuel_tank_capacity + fuel_type + 
+    transmission + drivetrain + age * kilometer + engine * fuel_tank_capacity
+  Res.Df        RSS Df Sum of Sq     F    Pr(&gt;F)    
+1   1867 5200126356                                 
+2   1862 4960239080  5 239887275 18.01 &lt; 2.2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>We observe significant differences. We can therefore conclude that addition of extra variables in the models results in better performance. We can assume <code>spec_4</code> as the model to work with henceforth.</p>
+<p>We can do some further investigation into this model to see whether it satisfies the assumptions of normally and homoskedastic errors. Homoskedastic errors are constant for all observations. We can do this by examining the diagnostic plots of the model.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-19_a3b7580f3cc7c61e9823a95dedb268f1">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggfortify)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(spec_4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The assumption of normality of residuals is violated as we can see many values on the edges of the <code>Normal Q-Q Plot</code>. The variance of the residuals also seems to vary with the fitted values in <code>Residual vs Fitted</code> plot. This is another violation. Violations of the OLS assumptions limit the performance and relevance of our models. We can conduct a formal test to support this using the Breusch-Pagan Test provided in the <code>lmtest</code>package</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-20_5be8c66b9a98de1c93ecc556ab2f01b8">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lmtest)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">bptest</span>(spec_4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    studentized Breusch-Pagan test
+
+data:  spec_4
+BP = 221.94, df = 11, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Presence of high leverage points in the <code>Leverage vs Fitted Plot</code> also contribute to violation of homeskedasticity. To get around the violation of the homoskedasticity assumption, we can use heteroskedasticity-robust standard errors instead. These are calculated by doing an adjustment on the normal standard errors reported by the <code>lm</code> function. There are different variations of these estimators ranging from ‘HC1’ to ‘HC5’. The recommended estimator is the ‘HC3’ estimator.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-21_ff47e363fd4db9735b4bf12cd9683d2d">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">modelsummary</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="st">'Model 4'</span> <span class="ot">=</span> spec_4), </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">vcov =</span> <span class="st">'robust'</span>,  </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">fmt =</span> <span class="dv">2</span>,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate =</span> <span class="st">"{estimate}{stars}"</span>,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">coef_rename =</span> <span class="fu">c</span>(</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'age'</span> <span class="ot">=</span> <span class="st">'Age'</span>, <span class="st">'kilometer'</span> <span class="ot">=</span> <span class="st">'Kilometers'</span>,</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'engine'</span> <span class="ot">=</span> <span class="st">'Engine size'</span>,</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fuel_tank_capacity'</span> <span class="ot">=</span> <span class="st">'Fuel tank capcity'</span>, </span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'age:kilometer'</span> <span class="ot">=</span> <span class="st">'Age x Kilometers'</span>,</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'engine:fuel_tank_capacity'</span> <span class="ot">=</span> <span class="st">'Engine x Fuel tank capacity'</span>,</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fuel_typeDiesel'</span> <span class="ot">=</span> <span class="st">'Fuel type: Diesel'</span>,</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fuel_typeOther'</span> <span class="ot">=</span> <span class="st">'Fuel type: Other'</span>,</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">'transmissionAutomatic'</span> <span class="ot">=</span> <span class="st">'Transmission: Automatic'</span>,</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'drivetrainRWD'</span> <span class="ot">=</span> <span class="st">'Drivetrain: RWD'</span>,</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'drivetrainAWD'</span> <span class="ot">=</span> <span class="st">'Drivetrain: AWD'</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">gof_omit =</span> <span class="st">"Num|Adj|AIC|BIC|Log|Std"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th"></th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">&nbsp;Model 4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">(Intercept)</td>
+<td style="text-align: center;">2765.27**</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(967.56)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Age</td>
+<td style="text-align: center;">−263.47***</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(59.71)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kilometers</td>
+<td style="text-align: center;">−0.01*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(0.00)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Engine size</td>
+<td style="text-align: center;">−0.75</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(0.64)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuel tank capcity</td>
+<td style="text-align: center;">−29.86</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(20.00)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuel type: Diesel</td>
+<td style="text-align: center;">−296.64*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(140.87)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fuel type: Other</td>
+<td style="text-align: center;">176.46</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(184.12)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Transmission: Automatic</td>
+<td style="text-align: center;">685.32***</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(75.64)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Drivetrain: RWD</td>
+<td style="text-align: center;">335.13*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(147.86)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Drivetrain: AWD</td>
+<td style="text-align: center;">563.56*</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(237.27)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Age x Kilometers</td>
+<td style="text-align: center;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">(0.00)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Engine x Fuel tank capacity</td>
+<td style="text-align: center;">0.03**</td>
+</tr>
+<tr class="even">
+<td style="text-align: left; box-shadow: 0px 1.5px;"></td>
+<td style="text-align: center; box-shadow: 0px 1.5px;">(0.01)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">R2</td>
+<td style="text-align: center;">0.550</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">F</td>
+<td style="text-align: center;">124.072</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RMSE</td>
+<td style="text-align: center;">1626.92</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+<p>Using robust errors results in wider standard errors and reduced statistical significance as we can see with <code>engine</code>, <code>fuel_tank_capacity</code> and the joint effect of <code>age</code> and <code>kilometer</code>.</p>
+</section>
+</section>
+<section id="inference" class="level1">
+<h1>Inference</h1>
+<p>Having done the regression analysis, we can now proceed to performing statistical inference on these variables. Statistical inference involves making some prior claims about our data and using the data to test whether our claims are valid. For example, we can assume that the average selling price of the cars is $1,500 and then examine the data to test the validity of this claim. In statistical inference the claims we make are often of the form ‘there is no difference, relationship or effect between variables’. This is referred to as the <em>Null hypothesis</em>. We test this hypothesis against the <em>Alternative hypothesis</em> which implies the existence of a difference, an effect or relationship between variables. The hypothesis are mutually exclusive.</p>
+<p>The general workflow of statistical inference involves the following steps:</p>
+<ol type="1">
+<li><p>Specifying the variable(s) of interest and their relation,</p></li>
+<li><p>Defining the null and alternative hypothesis</p></li>
+<li><p>Generating data assuming the null hypothesis</p></li>
+<li><p>Calculating the test statistics</p></li>
+</ol>
+<p>In order to arrive at a conclusion, the null hypothesis is assumed to be true. We then find evidence in the data in favor of or against the null hypothesis. This evidence is represented by the test statistic calculated from the data. We then calculate the probability of obtaining a test statistic that is at least as extreme as the one we observe in the data assuming the null hypothesis is true. If such a probability is high enough, then it means that the data is consistent with the null hypothesis. If such a probability is low, then the null hypothesis is less likely to be true and we reject it. The threshold at which we determine whether the evidence is high enough or low enough is determined by the significance level. The significance level is the probability that our results are random. If we assume a 5% significance level, then it means that if the probability of observing such a test statistic is less than 5%, then we reject the null hypothesis and assume the alternative hypothesis to be true. To be clear, if we repeat the experiment many times assuming the null hypothesis is true, say a thousand times and in at least 5% of these experiments we observe a test statistic greater than or equal to the the test statistic that we calculate from the data, then we can conclude there is an effect or relationship and therefore reject the null hypothesis and assume the alternative hypothesis to be true.</p>
+<p>Given that this is the general workflow in hypothesis testing, the <code>infer</code> package, which is part of the <code>tidymodels</code> framework, has unified this process by providing an interface to implement these for most of the tests in statistics. This is implemented through a set of four functions which generalize the steps above.</p>
+<ol type="1">
+<li><p>The <code>specify()</code> function is used to define the variable we are hypothesize or the relationship between the variables if there are two or more.</p></li>
+<li><p>The <code>hypothesize()</code> function defines the kind of hypothesis we are testing: a point estimate or a test of independence.</p></li>
+<li><p>The <code>generate()</code> function creates samples of the data according to the null hypothesis.</p></li>
+<li><p>Finally, the <code>calculate()</code> function calculates the test statistic in each generated sample.</p></li>
+</ol>
+<p>Following the above steps will obtain the distribution of the test statistic under the null hypothesis. After generating the distribution of the test statistic we calculate the actual value from the data and compare it to the distribution.</p>
+<section id="examples" class="level2">
+<h2 class="anchored" data-anchor-id="examples">Examples</h2>
+<p>We can demonstrate this process by a few examples.</p>
+<section id="mean-price" class="level3">
+<h3 class="anchored" data-anchor-id="mean-price">Mean Price</h3>
+<p>We can hypothesize that the mean selling price is $1850 and test against this using the data as follows.</p>
+<p>We specify the variable of interest and calculate test statistic(standardized sample average) across the 1000 samples generated. Sampling is done with replacement(‘bootstrap’).</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-22_673d2bd1e7d6ec0f0d047d40f10edabe">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(infer)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(<span class="at">response =</span> price) <span class="sc">%&gt;%</span> </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hypothesise</span>(<span class="at">null =</span> <span class="st">'point'</span>, <span class="at">mu =</span> <span class="dv">1850</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate</span>(<span class="at">reps =</span> <span class="dv">1000</span>, <span class="at">type =</span> <span class="st">'bootstrap'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'mean'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can view this distribution of the test statistics under the null hypothesis.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-23_1454a01b400634cea9571de4cd536361">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="sc">%&gt;%</span> </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">visualise</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>To obtain the actual value from the data we can follow the previous code while removing the <code>hypothesize()</code> and <code>generate()</code> steps.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-24_4a54bb9109f9aa3f9a6c6ca91d42656c">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>price_mean <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(<span class="at">response =</span> price) <span class="sc">%&gt;%</span> </span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'mean'</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>price_mean</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Response: price (numeric)
+# A tibble: 1 × 1
+   stat
+  &lt;dbl&gt;
+1 1718.</code></pre>
+</div>
+</div>
+<p>For us to make conclusions about whether to reject the null or alternative hypothesis, we need to get the p-value. Since we are testing for whether the mean is equal to $1,850, our test is two-sided. The mean could be smaller than or bigger than $1,850. If we were testing that the mean was less or more than, then we would set this value to left or right respectively.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-25_f7c15757d680ad749ba6bf36ca779b03">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="sc">%&gt;%</span> </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_p_value</span>(<span class="at">obs_stat =</span> price_mean, <span class="at">direction =</span> <span class="st">'two-sided'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 1
+  p_value
+    &lt;dbl&gt;
+1   0.006</code></pre>
+</div>
+</div>
+<p>The p-value is less than 0.05(5% significance level). This suggests strong evidence against the null hypothesis in favor of the alternative hypothesis that mean price is not equal to $1,850.</p>
+<p>We can gain a better understanding by visualizing this result. The p-value is represented by the shaded area.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-26_c78d033d601c9f54fc38a877c206606b">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="sc">%&gt;%</span> </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">visualise</span>() <span class="sc">+</span> </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shade_p_value</span>(<span class="at">obs_stat =</span>price_mean, <span class="at">direction =</span> <span class="st">'two-sided'</span>,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">linewidth =</span><span class="dv">1</span>, <span class="at">linetype =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="proportion-test" class="level3">
+<h3 class="anchored" data-anchor-id="proportion-test">Proportion test</h3>
+<p>To test whether the proportion of cars with <code>Automatic</code> transmission is equal to 50% we can do a point estimate as follows.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-27_0d6b24749c4a637855694c5f94ecb725">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate the observed statistic</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>p_hat <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(<span class="at">response =</span> transmission, <span class="at">success =</span> <span class="st">'Automatic'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'prop'</span>)</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>null_dist <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(<span class="at">response =</span> transmission, <span class="at">success =</span> <span class="st">'Automatic'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hypothesise</span>(<span class="at">null =</span> <span class="st">'point'</span>, <span class="at">p =</span> .<span class="dv">5</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate</span>(<span class="at">reps =</span> <span class="dv">1000</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'prop'</span>)</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>null_dist <span class="sc">%&gt;%</span> </span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">visualise</span>() <span class="sc">+</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shade_p_value</span>(</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">obs_stat =</span> p_hat, <span class="at">direction =</span> <span class="st">'two-sided'</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We see that the proportion of cars with Automatic transmission is not equal to 50%.</p>
+</section>
+<section id="difference-in-price-by-transmission" class="level3">
+<h3 class="anchored" data-anchor-id="difference-in-price-by-transmission">Difference in price by Transmission</h3>
+<p>We can extend the previous example to test that cars with <code>Automatic</code> transmission have a higher selling price than cars with <code>Manual</code> transmission.</p>
+<p>Here we use permutation based sampling where the values of the variables are shuffled without replacement.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-28_4ab5a90c5932883f93fcb0f3d2ff5863">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(price <span class="sc">~</span> transmission) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hypothesise</span>(<span class="at">null =</span> <span class="st">'independence'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate</span>(<span class="at">reps =</span> <span class="dv">1000</span>, <span class="at">type =</span> <span class="st">'permute'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'diff in means'</span>)</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>obs_diff <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(price <span class="sc">~</span> transmission) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'diff in means'</span>, <span class="at">order =</span> <span class="fu">c</span>(<span class="st">'Automatic'</span>,<span class="st">'Manual'</span>))</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="sc">%&gt;%</span> </span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">visualise</span>() <span class="sc">+</span> </span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shade_p_value</span>(<span class="at">obs_stat =</span> obs_diff, <span class="at">direction =</span> <span class="st">'right'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We see that on average selling price is higher for <code>Automatic</code> cars than for <code>Manual</code> cars.</p>
+</section>
+<section id="test-for-association" class="level3">
+<h3 class="anchored" data-anchor-id="test-for-association">Test for Association</h3>
+<p>Finally, we can test whether there is an association between <code>fuel_type</code> and <code>drivetrain</code>.</p>
+<div class="cell" data-hash="significance_cache/html/unnamed-chunk-29_f884683d0954e860250bf2cb6648d431">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="ot">&lt;-</span> cars <span class="sc">%&gt;%</span> </span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(<span class="at">response =</span> transmission, <span class="at">explanatory =</span> drivetrain) <span class="sc">%&gt;%</span> </span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hypothesise</span>(<span class="at">null =</span> <span class="st">'independence'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate</span>(<span class="at">reps =</span> <span class="dv">1000</span>, <span class="at">type =</span> <span class="st">'permute'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'Chisq'</span>)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>obs_stat <span class="ot">&lt;-</span>  cars <span class="sc">%&gt;%</span> </span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">specify</span>(<span class="at">response =</span> drivetrain, <span class="at">explanatory =</span> transmission) <span class="sc">%&gt;%</span> </span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate</span>(<span class="at">stat =</span> <span class="st">'Chisq'</span>)</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>null_distribution <span class="sc">%&gt;%</span> </span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">visualise</span>()<span class="sc">+</span></span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shade_p_value</span>(<span class="at">obs_stat =</span> obs_stat, <span class="at">direction =</span> <span class="st">'right'</span>)<span class="sc">+</span></span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_grey</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="significance_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>From the results above, we reject the null hypothesis that there is no association between <code>drivetrain</code> and <code>transmission</code>.</p>
+</section>
+</section>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>The above exercise has demonstrated how regression analysis and statistical inference can be applied in a simple and intuitive way. We have built and explored various regression setups, optimized parameter values and built a a workflow to perform statistical inference.</p>
+<p>While the results in this setup and given the structure are not extensible or generalizable, we have shown how the process can be conducted in R efficiently.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
